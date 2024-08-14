@@ -65,10 +65,17 @@ def scrape_places(search_queries, subc):
     results = []
     seen_names = set()
 
-    service = Service(ChromeDriverManager().install())
-    driver = webdriver.Chrome(service=service)
-
     for search_query in search_queries:
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--window-size=1920,1080')
+
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=options)
+
         url = f"https://www.google.com/maps/search/{search_query}+{subc}+dealers/"
         driver.get(url)
         driver.implicitly_wait(10)
@@ -144,10 +151,12 @@ def scrape_places(search_queries, subc):
                 'Website': website_text
             })
 
-            seen_names.add(title_text)
+            seen_names.add(title_text)  # Add the name to the set
 
         st.write(f"Results for {search_query}: {len(results)} places found")  # Debugging output to verify results
 
+       # Quit WebDriver after processing each search query
+    #Quit WebDriver at the end
     driver.quit()
     return results
 
