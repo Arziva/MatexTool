@@ -158,7 +158,7 @@ def scrape_places(search_queries, subc):
 
             seen_names.add(title_text)  # Add the name to the set
 
-        st.write(f"Results for {search_query}: {len(results)} places found")  # Debugging output to verify results
+        #st.write(f"Results for {search_query}: {len(results)} places found")  # Debugging output to verify results
 
        # Quit WebDriver after processing each search query
     #Quit WebDriver at the end
