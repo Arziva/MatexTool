@@ -170,7 +170,7 @@ def scrape_places(search_queries, subc):
 def main():
     st.title("Matex Search Tool")
 
-    country = st.selectbox("Select a country", ["India", "United Arab Emirates"])  # Add more countries as needed
+    country = st.selectbox("Select a country", ["India", "United Arab Emirates", "Egypt","Saudi Arabia"])  # Add more countries as needed
     if country:
         states = get_states(country)
         state = st.selectbox("Select a state", [state['name'] for state in states])
