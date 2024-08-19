@@ -11,6 +11,9 @@ from selenium.webdriver.common.keys import Keys
 import time
 import re
 import unicodedata
+from selenium.webdriver.chrome.options import Options
+
+
 
 API_URL = "https://api.data.gov.in/resource/9115b89c-7a80-4f54-9b06-21086e0f0bd7"
 API_KEY = "579b464db66ec23bdd00000128491f22b83a4d0d4826b4eb59f2eeef"
@@ -66,6 +69,13 @@ def scrape_places(search_queries, subc):
     seen_names = set()
 
     for search_query in search_queries:
+
+
+        #options = Options()
+        
+        service = Service('/usr/bin/chromedriver')
+
+        
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
@@ -73,7 +83,6 @@ def scrape_places(search_queries, subc):
         options.add_argument('--disable-gpu')
         options.add_argument('--window-size=1920,1080')
 
-        service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
 
         url = f"https://www.google.com/maps/search/{search_query}+{subc}+dealers/"
