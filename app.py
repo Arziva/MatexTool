@@ -68,13 +68,7 @@ def scrape_places(search_queries, subc):
     results = []
     seen_names = set()
 
-    for search_query in search_queries:
-
-
-        #options = Options()
-        
-        service = Service('/usr/bin/chromedriver')
-
+    for search_query in search_queries: 
         
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
@@ -82,6 +76,8 @@ def scrape_places(search_queries, subc):
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-gpu')
         options.add_argument('--window-size=1920,1080')
+
+        service = Service(ChromeDriverManager().install())
 
         driver = webdriver.Chrome(service=service, options=options)
 
