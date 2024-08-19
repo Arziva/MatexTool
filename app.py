@@ -86,15 +86,13 @@ def scrape_places(search_queries, subc):
         driver.implicitly_wait(10)
 
         def scroll_panel_with_page_down(driver, panel_xpath, presses, pause_time):
-            try:
-                panel_element = driver.find_element(By.XPATH, panel_xpath)
-                actions = ActionChains(driver)
-                actions.move_to_element(panel_element).click().perform()
-                for _ in range(presses):
-                    actions.send_keys(Keys.PAGE_DOWN).perform()
-                    time.sleep(pause_time)
-            except Exception as e:
-                print(f"Error scrolling: {e}")  # Debugging
+            panel_element = driver.find_element(By.XPATH, panel_xpath)
+            actions = ActionChains(driver)
+            actions.move_to_element(panel_element).click().perform()
+            for _ in range(presses):        
+                actions.send_keys(Keys.PAGE_DOWN).perform()
+                time.sleep(pause_time)
+            
 
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
         scroll_panel_with_page_down(driver, panel_xpath, presses=1000, pause_time=0)
