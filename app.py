@@ -75,6 +75,9 @@ def scrape_places(search_queries, subc):
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-gpu')
+        options.add_argument('--disable-software-rasterizer')
+        options.add_argument('--single-process')
+        options.add_argument('--no-zygote')
         options.add_argument('--window-size=1920,1080')
 
         service = Service(ChromeDriverManager().install())
@@ -98,7 +101,7 @@ def scrape_places(search_queries, subc):
     
 
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
-        scroll_panel_with_page_down(driver, panel_xpath, presses=1000, pause_time=0)
+        scroll_panel_with_page_down(driver, panel_xpath, presses=100, pause_time=0)
 
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, "html.parser")
@@ -139,18 +142,18 @@ def scrape_places(search_queries, subc):
             phone_text = get_text_or_na(phone_element)
             website_text = website_element.get('href') if website_element else 'N/A'
 
-            if 'Open' in allinfo_text:
-                address_pattern = re.compile(r'\)\s*(.*?)\s*Open', re.IGNORECASE)
-            elif 'No reviews' in allinfo_text:
-                if 'Temporarily closed' in allinfo_text:
-                    address_pattern = re.compile(r'No reviews\s*(.*?)\s*Temporarily closed', re.IGNORECASE)
-                else:
-                    address_pattern = re.compile(r'No reviews\s*(.*?)\s*Directions', re.IGNORECASE)
-            else:
-                address_pattern = re.compile(r'No reviews\s*(.*?)(?:\s*Directions|$)', re.IGNORECASE)
+            # if 'Open' in allinfo_text:
+            #     address_pattern = re.compile(r'\)\s*(.*?)\s*Open', re.IGNORECASE)
+            # elif 'No reviews' in allinfo_text:
+            #     if 'Temporarily closed' in allinfo_text:
+            #         address_pattern = re.compile(r'No reviews\s*(.*?)\s*Temporarily closed', re.IGNORECASE)
+            #     else:
+            #         address_pattern = re.compile(r'No reviews\s*(.*?)\s*Directions', re.IGNORECASE)
+            # else:
+            #     address_pattern = re.compile(r'No reviews\s*(.*?)(?:\s*Directions|$)', re.IGNORECASE)
 
-            address_match = address_pattern.search(allinfo_text)
-            address_text = address_match.group(1).strip() if address_match else 'N/A'
+            # address_match = address_pattern.search(allinfo_text)
+            # address_text = address_match.group(1).strip() if address_match else 'N/A'
 
             results.append({
                 'Name': title_text,
@@ -160,7 +163,7 @@ def scrape_places(search_queries, subc):
                 
                 'All-info': allinfo_text,
                 'Phone Number': phone_text,
-                'Address': address_text,
+                
                 'Website': website_text
             })
 
