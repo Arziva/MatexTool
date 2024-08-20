@@ -67,6 +67,7 @@ def scrape_places(search_queries, subc):
     seen_names = set()
 
     for search_query in search_queries:
+
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
@@ -75,6 +76,7 @@ def scrape_places(search_queries, subc):
         options.add_argument('--window-size=1920,1080')
 
         service = Service(ChromeDriverManager().install())
+
         driver = webdriver.Chrome(service=service, options=options)
 
         url = f"https://www.google.com/maps/search/{search_query}+{subc}+dealers/"
@@ -90,7 +92,7 @@ def scrape_places(search_queries, subc):
                 time.sleep(pause_time)
 
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
-        scroll_panel_with_page_down(driver, panel_xpath, presses=100, pause_time=0)
+        scroll_panel_with_page_down(driver, panel_xpath, presses=1000, pause_time=0)
 
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, "html.parser")
@@ -110,6 +112,7 @@ def scrape_places(search_queries, subc):
             rating_element = parent.find(class_='MW4etd')
             review_element = parent.find(class_='UY7F9')
             service_element = parent.find(class_='Ahnjwc')
+
             allinfo_element = parent.find(class_='lI9IFe')
             phone_element = parent.find(class_='UsdlK')
             website_element = parent.find(class_='lcr4fd S9kvJb')
@@ -122,6 +125,19 @@ def scrape_places(search_queries, subc):
             phone_text = get_text_or_na(phone_element)
             website_text = website_element.get('href') if website_element else 'N/A'
 
+            if 'Open' in allinfo_text:
+                address_pattern = re.compile(r'\)\s*(.*?)\s*Open', re.IGNORECASE)
+            elif 'No reviews' in allinfo_text:
+                if 'Temporarily closed' in allinfo_text:
+                    address_pattern = re.compile(r'No reviews\s*(.*?)\s*Temporarily closed', re.IGNORECASE)
+                else:
+                    address_pattern = re.compile(r'No reviews\s*(.*?)\s*Directions', re.IGNORECASE)
+            else:
+                address_pattern = re.compile(r'No reviews\s*(.*?)(?:\s*Directions|$)', re.IGNORECASE)
+
+            address_match = address_pattern.search(allinfo_text)
+            address_text = address_match.group(1).strip() if address_match else 'N/A'
+
             results.append({
                 'Name': title_text,
                 'Rating': rating_text,
@@ -129,10 +145,13 @@ def scrape_places(search_queries, subc):
                 'Service options': service_text,
                 'All-info': allinfo_text,
                 'Phone Number': phone_text,
+                'Address': address_text,
                 'Website': website_text
             })
 
-            seen_names.add(title_text)  # Add the name to the set
+            seen_names.add(title_text)
+
+        st.write(f"Results for {search_query}: {len(results)} places found")
 
         driver.quit()
 
@@ -142,7 +161,8 @@ def scrape_places(search_queries, subc):
 def main():
     st.title("Matex Search Tool")
 
-    country = st.selectbox("Select a country", ["India", "United Arab Emirates", "Egypt", "Saudi Arabia"])
+    country = st.selectbox("Select a country",
+                           ["India", "United Arab Emirates", "Egypt", "Saudi Arabia"])  # Add more countries as needed
     if country:
         states = get_states(country)
         state = st.selectbox("Select a state", [state['name'] for state in states])
@@ -155,7 +175,7 @@ def main():
                 sub_c = st.text_input("Enter a sub-category (e.g., scrap): ")
 
                 if st.button("Fetch Data"):
-                    all_results = []
+                    combined_results = []
                     for city in selected_cities:
                         district_data = get_district_data(city)
                         search_queries = []
@@ -173,14 +193,14 @@ def main():
                         if sub_c:
                             with st.spinner(f"Scraping data for {city}..."):
                                 city_results = scrape_places(search_queries, sub_c)
-                                all_results.extend(city_results)
+                                combined_results.extend(city_results)
 
-                    if all_results:
-                        st.write(f"Found {len(all_results)} places across all selected cities.")
-                        df_combined = pd.DataFrame(all_results)
-                        st.dataframe(df_combined)
+                    if combined_results:
+                        st.write(f"Found {len(combined_results)} places across all selected cities.")
+                        df = pd.DataFrame(combined_results)
+                        st.dataframe(df)
 
-                        csv = df_combined.to_csv(index=False).encode('utf-8')
+                        csv = df.to_csv(index=False).encode('utf-8')
                         st.download_button(
                             label="Download data as CSV",
                             data=csv,
