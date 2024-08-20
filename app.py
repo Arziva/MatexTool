@@ -119,6 +119,13 @@ def scrape_places(search_queries, subc):
             review_element = parent.find(class_='UY7F9')
             service_element = parent.find(class_='Ahnjwc')
             description_element = parent.find_all(class_='W4Efsd')[1]  # Select the second 'W4Efsd' div
+            
+            description_spans = description_element.find_all('span')
+            if len(description_spans) > 1:
+                description_text = get_text_or_na(description_spans[1])
+            else:
+                description_text = 'N/A'
+
             allinfo_element = parent.find(class_='lI9IFe')
             phone_element = parent.find(class_='UsdlK')
             website_element = parent.find(class_='lcr4fd S9kvJb')
