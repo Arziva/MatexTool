@@ -134,7 +134,7 @@ def scrape_places(search_queries, subc):
             review_count_text = get_text_or_na(review_element)
             review_count = int(review_count_text.strip('()').replace(',', '')) if review_count_text != 'N/A' else 'N/A'
             service_text = get_text_or_na(service_element)
-            description_text = get_text_or_na(description_element.find_all('span')[1])
+            #description_text = get_text_or_na(description_element.find_all('span')[1])
             allinfo_text = get_text_or_na(allinfo_element)
             phone_text = get_text_or_na(phone_element)
             website_text = website_element.get('href') if website_element else 'N/A'
@@ -157,7 +157,7 @@ def scrape_places(search_queries, subc):
                 'Rating': rating_text,
                 'Reviews': review_count,
                 'Service options': service_text,
-                'Description': description_text,
+                
                 'All-info': allinfo_text,
                 'Phone Number': phone_text,
                 'Address': address_text,
