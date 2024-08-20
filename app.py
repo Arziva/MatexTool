@@ -86,13 +86,16 @@ def scrape_places(search_queries, subc):
         driver.implicitly_wait(10)
 
         def scroll_panel_with_page_down(driver, panel_xpath, presses, pause_time):
-            panel_element = driver.find_element(By.XPATH, panel_xpath)
-            actions = ActionChains(driver)
-            actions.move_to_element(panel_element).click().perform()
-            for _ in range(presses):        
-                actions.send_keys(Keys.PAGE_DOWN).perform()
-                time.sleep(pause_time)
-            
+            try:
+                panel_element = driver.find_element(By.XPATH, panel_xpath)
+                actions = ActionChains(driver)
+                actions.move_to_element(panel_element).click().perform()
+                for _ in range(presses):        
+                    actions.send_keys(Keys.PAGE_DOWN).perform()
+                    time.sleep(pause_time)
+            except Exception as e:
+                print(f"Error scrolling: {e}")  # Debugging
+    
 
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
         scroll_panel_with_page_down(driver, panel_xpath, presses=1000, pause_time=0)
@@ -156,7 +159,7 @@ def scrape_places(search_queries, subc):
 
             seen_names.add(title_text)  # Add the name to the set
 
-        #st.write(f"Results for {search_query}: {len(results)} places found")  # Debugging output to verify results
+        st.write(f"Results for {search_query}: {len(results)} places found")  # Debugging output to verify results
 
        # Quit WebDriver after processing each search query
     #Quit WebDriver at the end
@@ -187,7 +190,7 @@ def main():
                     if district_data:
                         st.write(f"Found {len(district_data)} nearby places in district '{city}'.")
                         df = pd.DataFrame(district_data)
-                        #st.dataframe(df)
+                        st.dataframe(df)
 
                         search_queries = [record['officename___bo_so_ho_'] for record in district_data]
                     else:
