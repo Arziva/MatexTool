@@ -162,8 +162,9 @@ def scrape_places(search_queries, subc):
         st.write(f"Results for {search_query}: {len(results)} places found")  # Debugging output to verify results
 
        # Quit WebDriver after processing each search query
+        driver.quit()
     #Quit WebDriver at the end
-    driver.quit()
+    #driver.quit()
     return results
 
 
