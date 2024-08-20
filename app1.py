@@ -208,8 +208,8 @@ def main():
                                     st.write(f"No places found in {city}.")
                         else:
                             st.write(f"No sub-category provided for {city}.")
-                else:
-                    st.write("No cities selected.")
+            else:
+                st.write("No cities selected.")
 
 if __name__ == "__main__":
     main()
