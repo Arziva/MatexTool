@@ -223,7 +223,6 @@ def main():
                                     data=csv,
                                     file_name=f'{city}_scrap_dealers.csv',
                                     mime='text/csv',
-                                    mime='text/csv',
                                 )
                             else:
                                 st.write("No data found during scraping.")
