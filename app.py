@@ -91,7 +91,7 @@ def scrape_places(search_queries, subc):
                 time.sleep(pause_time)
 
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
-        scroll_panel_with_page_down(driver, panel_xpath, presses=1000, pause_time=0)
+        scroll_panel_with_page_down(driver, panel_xpath, presses=100, pause_time=0)
 
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, "html.parser")
