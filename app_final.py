@@ -217,7 +217,7 @@ def main():
 
                                 csv = df.to_csv(index=False).encode('utf-8')
                                 st.download_button(
-                                    label="Download data as CSV",
+                                    label="Download data as CSV and pick new city",
                                     data=csv,
                                     file_name=f'{city}_scrap_dealers.csv',
                                     mime='text/csv',
