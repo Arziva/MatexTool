@@ -11,8 +11,6 @@ from selenium.webdriver.common.keys import Keys
 import time
 import re
 import unicodedata
-from selenium.webdriver.chrome.options import Options
-
 
 
 API_URL = "https://api.data.gov.in/resource/9115b89c-7a80-4f54-9b06-21086e0f0bd7"
@@ -41,7 +39,6 @@ def get_cities(country, state):
 
 
 def get_district_data(district_name):
-
     district_name = ''.join(c for c in unicodedata.normalize('NFD', district_name) if not unicodedata.combining(c)).upper()
     st.write(district_name)
     if district_name == 'BENGALURU':
@@ -86,16 +83,12 @@ def scrape_places(search_queries, subc):
         driver.implicitly_wait(10)
 
         def scroll_panel_with_page_down(driver, panel_xpath, presses, pause_time):
-            #try:
             panel_element = driver.find_element(By.XPATH, panel_xpath)
             actions = ActionChains(driver)
             actions.move_to_element(panel_element).click().perform()
             for _ in range(presses):        
                 actions.send_keys(Keys.PAGE_DOWN).perform()
                 time.sleep(pause_time)
-            #except Exception as e:
-                #print(f"Error scrolling: {e}")  # Debugging
-    
 
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
         scroll_panel_with_page_down(driver, panel_xpath, presses=1000, pause_time=0)
@@ -168,18 +161,15 @@ def scrape_places(search_queries, subc):
 
         st.write(f"Results for {search_query}: {len(results)} places found")  # Debugging output to verify results
 
-       # Quit WebDriver after processing each search query
+        # Quit WebDriver after processing each search query
         driver.quit()
-    #Quit WebDriver at the end
-    #driver.quit()
     return results
-
 
 
 def main():
     st.title("Matex Search Tool")
 
-    country = st.selectbox("Select a country", ["India", "United Arab Emirates", "Egypt","Saudi Arabia"])  # Add more countries as needed
+    country = st.selectbox("Select a country", ["India", "United Arab Emirates", "Egypt", "Saudi Arabia"])  # Add more countries as needed
     if country:
         states = get_states(country)
         state = st.selectbox("Select a state", [state['name'] for state in states])
@@ -199,6 +189,7 @@ def main():
                         st.write(f"Found {len(district_data)} nearby places in district '{city}'.")
                         df = pd.DataFrame(district_data)
                         st.dataframe(df)
+                        st.session_state.district_data = df  # Save to session state
 
                         search_queries = [record['officename___bo_so_ho_'] for record in district_data]
                     else:
@@ -206,24 +197,32 @@ def main():
                         search_queries = [city]
 
                     if sub_c:
-                        if True:
-                            with st.spinner("Scraping data..."):
-                                combined_results = scrape_places(search_queries, sub_c)
+                        with st.spinner("Scraping data..."):
+                            combined_results = scrape_places(search_queries, sub_c)
+                            st.session_state.scraped_data = combined_results  # Save to session state
 
-                                if combined_results:
-                                    st.write(f"Found {len(combined_results)} places.")
-                                    df = pd.DataFrame(combined_results)
-                                    st.dataframe(df)
+                            if combined_results:
+                                st.write(f"Found {len(combined_results)} places.")
+                                df = pd.DataFrame(combined_results)
+                                st.dataframe(df)
+                                st.session_state.scraped_df = df  # Save DataFrame to session state
 
-                                    csv = df.to_csv(index=False).encode('utf-8')
-                                    st.download_button(
-                                        label="Download data as CSV",
-                                        data=csv,
-                                        file_name=f'{city}_scrap_dealers.csv',
-                                        mime='text/csv',
-                                    )
-                                else:
-                                    st.write("No places found.")
+                                csv = df.to_csv(index=False).encode('utf-8')
+                                st.download_button(
+                                    label="Download data as CSV",
+                                    data=csv,
+                                    file_name=f'{city}_scrap_dealers.csv',
+                                    mime='text/csv',
+                                )
+
+    
+    if 'scraped_df' in st.session_state:
+        st.download_button(
+            label="Download last scraped data as CSV",
+            data=st.session_state.scraped_df.to_csv(index=False).encode('utf-8'),
+            file_name='scraped_data.csv',
+            mime='text/csv',
+        )
 
 
 if __name__ == "__main__":
