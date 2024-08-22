@@ -91,7 +91,7 @@ def scrape_places(search_queries, subc):
                 time.sleep(pause_time)
 
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
-        scroll_panel_with_page_down(driver, panel_xpath, presses=100, pause_time=0)
+        scroll_panel_with_page_down(driver, panel_xpath, presses=1000, pause_time=0)
 
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, "html.parser")
@@ -189,7 +189,6 @@ def main():
                         st.write(f"Found {len(district_data)} nearby places in district '{city}'.")
                         df = pd.DataFrame(district_data)
                         st.dataframe(df)
-                        st.session_state.district_data = df  # Save to session state
 
                         search_queries = [record['officename___bo_so_ho_'] for record in district_data]
                     else:
@@ -199,13 +198,11 @@ def main():
                     if sub_c:
                         with st.spinner("Scraping data..."):
                             combined_results = scrape_places(search_queries, sub_c)
-                            st.session_state.scraped_data = combined_results  # Save to session state
 
                             if combined_results:
                                 st.write(f"Found {len(combined_results)} places.")
                                 df = pd.DataFrame(combined_results)
                                 st.dataframe(df)
-                                st.session_state.scraped_df = df  # Save DataFrame to session state
 
                                 csv = df.to_csv(index=False).encode('utf-8')
                                 st.download_button(
@@ -214,15 +211,6 @@ def main():
                                     file_name=f'{city}_scrap_dealers.csv',
                                     mime='text/csv',
                                 )
-
-    
-    if 'scraped_df' in st.session_state:
-        st.download_button(
-            label="Download last scraped data as CSV",
-            data=st.session_state.scraped_df.to_csv(index=False).encode('utf-8'),
-            file_name='scraped_data.csv',
-            mime='text/csv',
-        )
 
 
 if __name__ == "__main__":
