@@ -199,7 +199,7 @@ def main():
                     if district_data:
                         st.write(f"Found {len(district_data)} nearby places in district '{city}'.")
                         df = pd.DataFrame(district_data)
-                        st.dataframe(df)
+                        #st.dataframe(df)
 
                         search_queries = [record['officename___bo_so_ho_'] for record in district_data]
                     else:
