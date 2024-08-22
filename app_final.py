@@ -60,18 +60,21 @@ def get_district_data(district_name):
 def scrape_places(search_queries, subc):
     results = []
     seen_names = set()
-    processed_areas = set()
-
     total_queries = len(search_queries)
-    start_time = time.time()
+    
+    progress_bar = st.progress(0)   # Initialize a progress bar
+    status_text = st.empty()         # Initialize an empty text element for status updates
 
-    for idx, search_query in enumerate(search_queries):
-        if search_query in processed_areas:
-            st.write(f"Skipping already processed area: {search_query}")
+    for index, search_query in enumerate(search_queries):
+        
+        if search_query in seen_names:
+            status_text.text(f"Skipping already processed area: {search_query} ({index + 1}/{total_queries})")
             continue
+
+        # Update the status text with the currently processing area
+        status_text.text(f"Processing area: {search_query} ({index + 1}/{total_queries})")
         
-        st.write(f"Processing area: {search_query} ({idx + 1}/{total_queries})")
-        
+        # Set up Chrome WebDriver options
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
@@ -80,13 +83,14 @@ def scrape_places(search_queries, subc):
         options.add_argument('--window-size=1920,1080')
 
         service = Service(ChromeDriverManager().install())
-
         driver = webdriver.Chrome(service=service, options=options)
 
+        # Construct the URL for Google Maps search
         url = f"https://www.google.com/maps/search/{search_query}+{subc}+dealers/"
         driver.get(url)
         driver.implicitly_wait(1)
 
+        # Scroll the results panel to load more results
         def scroll_panel_with_page_down(driver, panel_xpath, presses, pause_time):
             panel_element = driver.find_element(By.XPATH, panel_xpath)
             actions = ActionChains(driver)
@@ -98,9 +102,11 @@ def scrape_places(search_queries, subc):
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
         scroll_panel_with_page_down(driver, panel_xpath, presses=100, pause_time=0)
 
+        # Parse the page source with BeautifulSoup
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, "html.parser")
 
+        # Helper function to get text or return 'N/A' if element is not found
         def get_text_or_na(element):
             return element.text if element else 'N/A'
 
@@ -113,16 +119,11 @@ def scrape_places(search_queries, subc):
             if title_text in seen_names:
                 continue
 
+            # Extract additional details
             rating_element = parent.find(class_='MW4etd')
             review_element = parent.find(class_='UY7F9')
             service_element = parent.find(class_='Ahnjwc')
             description_element = parent.find_all(class_='W4Efsd')[1]  # Select the second 'W4Efsd' div
-            
-            description_spans = description_element.find_all('span')
-            if len(description_spans) > 1:
-                description_text = get_text_or_na(description_spans[1])
-            else:
-                description_text = 'N/A'
 
             allinfo_element = parent.find(class_='lI9IFe')
             phone_element = parent.find(class_='UsdlK')
@@ -137,6 +138,7 @@ def scrape_places(search_queries, subc):
             phone_text = get_text_or_na(phone_element)
             website_text = website_element.get('href') if website_element else 'N/A'
 
+            # Determine the correct pattern to extract the address
             if 'Open' in allinfo_text:
                 address_pattern = re.compile(r'\)\s*(.*?)\s*Open', re.IGNORECASE)
             elif 'No reviews' in allinfo_text:
@@ -166,18 +168,14 @@ def scrape_places(search_queries, subc):
 
         # Quit WebDriver after processing each search query
         driver.quit()
-
-        # Mark the area as processed
-        processed_areas.add(search_query)
-
-        # Estimate time remaining
-        elapsed_time = time.time() - start_time
-        avg_time_per_query = elapsed_time / (idx + 1)
-        remaining_queries = total_queries - (idx + 1)
-        eta = avg_time_per_query * remaining_queries
-        st.write(f"Estimated time remaining: {math.ceil(eta)} seconds")
-
+        
+        # Update the progress bar and ETA
+        progress_bar.progress((index + 1) / total_queries)
+        eta = (total_queries - index - 1) * 5  # Assuming 5 seconds per query for simplicity
+        status_text.text(f"Processing area: {search_query} ({index + 1}/{total_queries})\nEstimated time remaining: {eta} seconds")
+        
     return results
+
 
 def main():
     st.title("Matex Search Tool")
