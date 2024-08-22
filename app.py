@@ -80,7 +80,7 @@ def scrape_places(search_queries, subc):
 
         url = f"https://www.google.com/maps/search/{search_query}+{subc}+dealers/"
         driver.get(url)
-        driver.implicitly_wait(10)
+        driver.implicitly_wait(1)
 
         def scroll_panel_with_page_down(driver, panel_xpath, presses, pause_time):
             panel_element = driver.find_element(By.XPATH, panel_xpath)
