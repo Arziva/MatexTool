@@ -22,10 +22,14 @@ STATE_CITIES_URL = "https://countriesnow.space/api/v0.1/countries/state/cities"
 def get_states(country):
     response = requests.post(COUNTRY_STATES_URL, json={"country": country})
     if response.status_code == 200:
-        return response.json().get("data", {}).get("states", [])
+        states = response.json().get("data", {}).get("states", [])
+        if country == "Sri Lanka":
+            states = [state for state in states if "District" not in state['name']]
+        return states
     else:
         st.error("Failed to fetch states")
         return []
+
 
 def get_cities(country, state):
     response = requests.post(STATE_CITIES_URL, json={"country": country, "state": state})
@@ -180,7 +184,7 @@ def scrape_places(search_queries, subc):
 def main():
     st.title("Matex Search Tool")
 
-    country = st.selectbox("Select a country", ["India", "United Arab Emirates", "Egypt", "Saudi Arabia"])  #"Sri Lanka"
+    country = st.selectbox("Select a country", ["India", "United Arab Emirates", "Egypt", "Saudi Arabia", "Sri Lanka"])  
     if country:
         states = get_states(country)
         state = st.selectbox("Select a state", [state['name'] for state in states])
