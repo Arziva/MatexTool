@@ -62,7 +62,7 @@ def get_district_data(district_name):
         st.error("Failed to fetch district data")
         return []
 
-def scrape_places(search_queries, subc):
+def scrape_places(search_queries, subc, state, country):
     results = []
     seen_names = set()
     total_queries = len(search_queries)
@@ -91,7 +91,7 @@ def scrape_places(search_queries, subc):
         driver = webdriver.Chrome(service=service, options=options)
 
        
-        url = f"https://www.google.com/maps/search/{search_query}+dealers in+{subc}/"
+        url = f"https://www.google.com/maps/search/{search_query}+dealers in+{subc}+, +{state}+, +{country}/"
         driver.get(url)
         driver.implicitly_wait(1)
 
@@ -213,7 +213,7 @@ def main():
 
                     if sub_c:
                         with st.spinner("Scraping data..."):
-                            combined_results = scrape_places(search_queries, sub_c)
+                            combined_results = scrape_places(search_queries, sub_c, state, country)
 
                             if combined_results:
                                 st.write(f"Found {len(combined_results)} places.")
