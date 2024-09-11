@@ -67,8 +67,8 @@ def scrape_places(search_queries, subc):
     seen_names = set()
     total_queries = len(search_queries)
     
-    progress_bar = st.progress(0)   # Initialize a progress bar
-    status_text = st.empty()         # Initialize an empty text element for status updates
+    progress_bar = st.progress(0)   
+    status_text = st.empty()         
 
     for index, search_query in enumerate(search_queries):
         
@@ -76,10 +76,10 @@ def scrape_places(search_queries, subc):
             status_text.text(f"Skipping already processed area: {search_query} ({index + 1}/{total_queries})")
             continue
 
-        # Update the status text with the currently processing area
+       
         status_text.text(f"Processing area: {search_query} ({index + 1}/{total_queries})")
         
-        # Set up Chrome WebDriver options
+       
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
@@ -90,12 +90,12 @@ def scrape_places(search_queries, subc):
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
 
-        # Construct the URL for Google Maps search
-        url = f"https://www.google.com/maps/search/{search_query}+{subc}+dealers/"
+       
+        url = f"https://www.google.com/maps/search/{search_query}+dealers in+{subc}/"
         driver.get(url)
         driver.implicitly_wait(1)
 
-        # Scroll the results panel to load more results
+       
         def scroll_panel_with_page_down(driver, panel_xpath, presses, pause_time):
             panel_element = driver.find_element(By.XPATH, panel_xpath)
             actions = ActionChains(driver)
@@ -107,11 +107,11 @@ def scrape_places(search_queries, subc):
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
         scroll_panel_with_page_down(driver, panel_xpath, presses=100, pause_time=0)
 
-        # Parse the page source with BeautifulSoup
+        
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, "html.parser")
 
-        # Helper function to get text or return 'N/A' if element is not found
+        
         def get_text_or_na(element):
             return element.text if element else 'N/A'
 
@@ -124,7 +124,7 @@ def scrape_places(search_queries, subc):
             if title_text in seen_names:
                 continue
 
-            # Extract additional details
+            
             rating_element = parent.find(class_='MW4etd')
             review_element = parent.find(class_='UY7F9')
             service_element = parent.find(class_='Ahnjwc')
@@ -143,7 +143,7 @@ def scrape_places(search_queries, subc):
             phone_text = get_text_or_na(phone_element)
             website_text = website_element.get('href') if website_element else 'N/A'
 
-            # Determine the correct pattern to extract the address
+           
             if 'Open' in allinfo_text:
                 address_pattern = re.compile(r'\)\s*(.*?)\s*Open', re.IGNORECASE)
             elif 'No reviews' in allinfo_text:
@@ -169,14 +169,14 @@ def scrape_places(search_queries, subc):
                 'Website': website_text
             })
 
-            seen_names.add(title_text)  # Add the name to the set
+            seen_names.add(title_text)  
 
-        # Quit WebDriver after processing each search query
+        
         driver.quit()
         
-        # Update the progress bar and ETA
+        
         progress_bar.progress((index + 1) / total_queries)
-        eta = (total_queries - index - 1) * 5  # Assuming 5 seconds per query for simplicity
+        eta = (total_queries - index - 1) * 5  
         status_text.text(f"Processing area: {search_query} ({index + 1}/{total_queries})\nEstimated time remaining: {eta} seconds")
         
     return results
