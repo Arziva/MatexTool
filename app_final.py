@@ -25,6 +25,7 @@ def get_states(country):
         states = response.json().get("data", {}).get("states", [])
         if country == "Sri Lanka":
             states = [state for state in states if "District" not in state['name']]
+            states = [state for state in states if "district" not in state['name']]
         return states
     else:
         st.error("Failed to fetch states")
