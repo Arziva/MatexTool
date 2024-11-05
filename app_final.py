@@ -31,7 +31,6 @@ def get_states(country):
         st.error("Failed to fetch states")
         return []
 
-
 def get_cities(country, state):
     response = requests.post(STATE_CITIES_URL, json={"country": country, "state": state})
     if response.status_code == 200:
@@ -67,19 +66,16 @@ def scrape_places(search_queries, subc):
     seen_names = set()
     total_queries = len(search_queries)
     
-    progress_bar = st.progress(0)   
-    status_text = st.empty()         
+    progress_bar = st.progress(0)
+    status_text = st.empty()
 
     for index, search_query in enumerate(search_queries):
-        
         if search_query in seen_names:
             status_text.text(f"Skipping already processed area: {search_query} ({index + 1}/{total_queries})")
             continue
 
-       
         status_text.text(f"Processing area: {search_query} ({index + 1}/{total_queries})")
         
-       
         options = webdriver.ChromeOptions()
         options.add_argument('--headless')
         options.add_argument('--no-sandbox')
@@ -90,12 +86,10 @@ def scrape_places(search_queries, subc):
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
 
-       
         url = f"https://www.google.com/maps/search/{search_query}+dealers in+{subc}/"
         driver.get(url)
         driver.implicitly_wait(1)
 
-       
         def scroll_panel_with_page_down(driver, panel_xpath, presses, pause_time):
             panel_element = driver.find_element(By.XPATH, panel_xpath)
             actions = ActionChains(driver)
@@ -107,11 +101,9 @@ def scrape_places(search_queries, subc):
         panel_xpath = "//*[@id='QA0Szd']/div/div/div[1]/div[2]/div"
         scroll_panel_with_page_down(driver, panel_xpath, presses=100, pause_time=0)
 
-        
         page_source = driver.page_source
         soup = BeautifulSoup(page_source, "html.parser")
 
-        
         def get_text_or_na(element):
             return element.text if element else 'N/A'
 
@@ -124,12 +116,10 @@ def scrape_places(search_queries, subc):
             if title_text in seen_names:
                 continue
 
-            
             rating_element = parent.find(class_='MW4etd')
             review_element = parent.find(class_='UY7F9')
             service_element = parent.find(class_='Ahnjwc')
-            description_element = parent.find_all(class_='W4Efsd')[1]  # Select the second 'W4Efsd' div
-
+            description_element = parent.find_all(class_='W4Efsd')[1]
             allinfo_element = parent.find(class_='lI9IFe')
             phone_element = parent.find(class_='UsdlK')
             website_element = parent.find(class_='lcr4fd S9kvJb')
@@ -143,7 +133,6 @@ def scrape_places(search_queries, subc):
             phone_text = get_text_or_na(phone_element)
             website_text = website_element.get('href') if website_element else 'N/A'
 
-           
             if 'Open' in allinfo_text:
                 address_pattern = re.compile(r'\)\s*(.*?)\s*Open', re.IGNORECASE)
             elif 'No reviews' in allinfo_text:
@@ -169,18 +158,15 @@ def scrape_places(search_queries, subc):
                 'Website': website_text
             })
 
-            seen_names.add(title_text)  
+            seen_names.add(title_text)
 
-        
         driver.quit()
-        
-        
+
         progress_bar.progress((index + 1) / total_queries)
-        eta = (total_queries - index - 1) * 5  
+        eta = (total_queries - index - 1) * 5
         status_text.text(f"Processing area: {search_query} ({index + 1}/{total_queries})\nEstimated time remaining: {eta} seconds")
         
     return results
-
 
 def main():
     st.title("Matex Search Tool")
@@ -196,20 +182,21 @@ def main():
 
             if city:
                 sub_c = st.text_input("Enter a sub-category (e.g., scrap): ")
+                search_type = st.radio("Select Search Type", ["Quick Search", "Comprehensive Search"])
 
                 if st.button("Fetch Data"):
-                    district_data = get_district_data(city)
                     search_queries = []
 
-                    if district_data:
-                        st.write(f"Found {len(district_data)} nearby places in district '{city}'.")
-                        df = pd.DataFrame(district_data)
-                        #st.dataframe(df)
-
-                        search_queries = [record['officename___bo_so_ho_'] for record in district_data]
-                    else:
-                        st.write("No district data found. Using city name as search query.")
+                    if search_type == "Quick Search":
                         search_queries = [city]
+                    else:
+                        district_data = get_district_data(city)
+                        if district_data:
+                            st.write(f"Found {len(district_data)} nearby places in district '{city}'.")
+                            search_queries = [record['officename___bo_so_ho_'] for record in district_data]
+                        else:
+                            st.write("No district data found. Using city name as search query.")
+                            search_queries = [city]
 
                     if sub_c:
                         with st.spinner("Scraping data..."):
@@ -224,21 +211,13 @@ def main():
                                 st.download_button(
                                     label="Download data as CSV and pick new city",
                                     data=csv,
-                                    file_name=f'{city}_scrap_dealers.csv',
-                                    mime='text/csv',
+                                    file_name=f"{city}_{sub_c}_results.csv",
+                                    mime="text/csv",
                                 )
                             else:
-                                st.write("No data found during scraping.")
+                                st.write("No places found. Please try again.")
                     else:
-                        st.error("Please enter a sub-category to continue.")
-                else:
-                    st.error("Please click on the 'Fetch Data' button to start the process.")
-            else:
-                st.error("Please select a city to continue.")
-        else:
-            st.error("Please select a state to continue.")
-    else:
-        st.error("Please select a country to continue.")
+                        st.error("Please enter a sub-category before searching.")
 
 if __name__ == "__main__":
     main()
