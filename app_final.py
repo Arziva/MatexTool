@@ -11,7 +11,6 @@ from selenium.webdriver.common.keys import Keys
 import time
 import re
 import unicodedata
-import math
 
 API_URL = "https://api.data.gov.in/resource/9115b89c-7a80-4f54-9b06-21086e0f0bd7"
 API_KEY = "579b464db66ec23bdd00000128491f22b83a4d0d4826b4eb59f2eeef"
@@ -31,14 +30,14 @@ def get_states(country):
         st.error("Failed to fetch states")
         return []
 
-
 def get_cities(country, state):
     response = requests.post(STATE_CITIES_URL, json={"country": country, "state": state})
     if response.status_code == 200:
-        return response.json().get("data", [])
+        cities = response.json().get("data", [])
+        return cities if cities else ["N/A"]  # Return ["N/A"] if no cities are found
     else:
         st.error("Failed to fetch cities")
-        return []
+        return ["N/A"]
 
 def get_district_data(district_name):
     district_name = ''.join(c for c in unicodedata.normalize('NFD', district_name) if not unicodedata.combining(c)).upper()
@@ -194,7 +193,7 @@ def main():
             cities = get_cities(country, state)
             city = st.selectbox("Select a city", cities)
 
-            if city:
+            if city and city != "N/A":
                 sub_c = st.text_input("Enter a sub-category (e.g., scrap): ")
 
                 if st.button("Fetch Data"):
@@ -204,7 +203,6 @@ def main():
                     if district_data:
                         st.write(f"Found {len(district_data)} nearby places in district '{city}'.")
                         df = pd.DataFrame(district_data)
-                        #st.dataframe(df)
 
                         search_queries = [record['officename___bo_so_ho_'] for record in district_data]
                     else:
