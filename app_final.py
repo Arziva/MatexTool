@@ -185,18 +185,23 @@ def main():
     st.title("Matex Search Tool")
 
     country = st.selectbox("Select a country", ["India", "United Arab Emirates", "Egypt", "Saudi Arabia", "Sri Lanka", "Philippines"])  
+    
     if country:
         states = get_states(country)
         state = st.selectbox("Select a state", [state['name'] for state in states])
 
         if state:
-            cities = get_cities(country, state)
-            city = st.selectbox("Select a city", cities + ["N/A"])
+            # For countries like Philippines where no cities are needed
+            if country == "Philippines":
+                city = ""  # No city to select
+            else:
+                cities = get_cities(country, state)
+                city = st.selectbox("Select a city", cities + ["N/A"])
 
             sub_c = st.text_input("Enter a sub-category (e.g., scrap): ")
 
             if st.button("Fetch Data"):
-                if city == "N/A":
+                if city == "N/A" or city == "":
                     search_queries = [f"{state}, {country}"]
                 else:
                     district_data = get_district_data(city)
@@ -211,7 +216,8 @@ def main():
                     search_queries = [f"{query} {sub_c}" for query in search_queries]
 
                 with st.spinner("Scraping data..."):
-                    combined_results = scrape_places(search_queries, sub_c)
+                    # Pass country and state along with search queries and sub_c to the scrape_places function
+                    combined_results = scrape_places(search_queries, sub_c, state, country)
 
                     if combined_results:
                         st.write(f"Found {len(combined_results)} places.")
@@ -236,3 +242,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
