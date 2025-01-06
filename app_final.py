@@ -191,48 +191,44 @@ def main():
 
         if state:
             cities = get_cities(country, state)
-            city = st.selectbox("Select a city", cities)
+            city = st.selectbox("Select a city", cities + ["N/A"])
 
-            if city and city != "N/A":
-                sub_c = st.text_input("Enter a sub-category (e.g., scrap): ")
+            sub_c = st.text_input("Enter a sub-category (e.g., scrap): ")
 
-                if st.button("Fetch Data"):
+            if st.button("Fetch Data"):
+                if city == "N/A":
+                    search_queries = [f"{state}, {country}"]
+                else:
                     district_data = get_district_data(city)
-                    search_queries = []
-
                     if district_data:
                         st.write(f"Found {len(district_data)} nearby places in district '{city}'.")
-                        df = pd.DataFrame(district_data)
-
                         search_queries = [record['officename___bo_so_ho_'] for record in district_data]
                     else:
                         st.write("No district data found. Using city name as search query.")
-                        search_queries = [city]
+                        search_queries = [f"{city}, {state}, {country}"]
 
-                    if sub_c:
-                        with st.spinner("Scraping data..."):
-                            combined_results = scrape_places(search_queries, sub_c)
+                if sub_c:
+                    search_queries = [f"{query} {sub_c}" for query in search_queries]
 
-                            if combined_results:
-                                st.write(f"Found {len(combined_results)} places.")
-                                df = pd.DataFrame(combined_results)
-                                st.dataframe(df)
+                with st.spinner("Scraping data..."):
+                    combined_results = scrape_places(search_queries, sub_c)
 
-                                csv = df.to_csv(index=False).encode('utf-8')
-                                st.download_button(
-                                    label="Download data as CSV and pick new city",
-                                    data=csv,
-                                    file_name=f'{city}_scrap_dealers.csv',
-                                    mime='text/csv',
-                                )
-                            else:
-                                st.write("No data found during scraping.")
+                    if combined_results:
+                        st.write(f"Found {len(combined_results)} places.")
+                        df = pd.DataFrame(combined_results)
+                        st.dataframe(df)
+
+                        csv = df.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label="Download data as CSV and pick new city",
+                            data=csv,
+                            file_name=f'{state}_scrap_dealers.csv',
+                            mime='text/csv',
+                        )
                     else:
-                        st.error("Please enter a sub-category to continue.")
-                else:
-                    st.error("Please click on the 'Fetch Data' button to start the process.")
+                        st.write("No data found during scraping.")
             else:
-                st.error("Please select a city to continue.")
+                st.error("Please click on the 'Fetch Data' button to start the process.")
         else:
             st.error("Please select a state to continue.")
     else:
